@@ -27,3 +27,10 @@ EXIT_OBJ = ['E']
 SLOWING_OBSTACLE = ['O', 'M']
 ADDING_ATTRIBUTES = ['C', 'T', 'D']
 
+DOWN = 0
+UP = 1
+LEFT = 2
+RIGHT = 3
+HALF_RIGHT = 4
+HALF_LEFT = 5
+
