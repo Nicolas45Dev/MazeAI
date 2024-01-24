@@ -24,6 +24,7 @@ class AIEngine:
         self.maze = maze
         self.graphic_maze = MazeSolver(maze_file)
         self.dodger = ObstacleDodger.Dodger()
+        self.tuile_size = (self.maze.tile_size_x, self.maze.tile_size_y)
 
     def index_2d(self, list, item):
         for i, x in enumerate(list):
@@ -47,7 +48,9 @@ class AIEngine:
     def computeShortestPath(self):
         self.player_position_start = (0, 1)
         self.player_position_end = (15, 22)
-        self.shortest_graph_list = self.graphic_maze.getShortestPath(self.player_position_start, self.player_position_end)
+        self.shortest_graph_list = self.graphic_maze.getShortestPath(self.player_position_start,
+                                                                     self.player_position_end)
+
     # This method loop through the shortest path and move the player accordingly
     def movePlayer(self):
         coordinate = self.shortest_graph_list[0]
@@ -76,14 +79,16 @@ class AIEngine:
             # Move the player to the coordinate
             if coordinate[0] < player_x:
                 pygame.event.post(pygame.event.Event(MOVE_PLAYER_UP))
+                self.dodger.last_action = UP
             elif coordinate[0] > player_x:
                 pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
+                self.dodger.last_action = DOWN
             elif coordinate[1] < player_y:
                 pygame.event.post(pygame.event.Event(MOVE_PLAYER_LEFT))
+                self.dodger.last_action = LEFT
             elif coordinate[1] > player_y:
                 pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
-
-        #self.getCoinTreasure()
+                self.dodger.last_action = RIGHT
 
         # if the coordinate is reached, remove it from the list
         if coordinate == (player_x, player_y) and len(self.shortest_graph_list) > 1:
@@ -94,9 +99,8 @@ class AIEngine:
     # This method uses fuzzy logic to dodge obstacles
     def dodgeObstacles(self):
         vision = self.maze.make_perception_list(self.player, "")
+        self.dodger.maze = self.maze
         return self.dodger.dodge(vision, self.player)
-
-
 
     # If a coin or a treasure is near the player, the method will change the player direction to get it
     def getCoinTreasure(self):
