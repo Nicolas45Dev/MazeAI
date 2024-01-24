@@ -8,6 +8,7 @@ import pygame
 from Maze import Maze
 import ObstacleDodger
 from Constants import *
+from swiplserver import PrologMQI
 
 MOVE_PLAYER_RIGHT = pygame.USEREVENT + 1
 MOVE_PLAYER_LEFT = pygame.USEREVENT + 2
@@ -87,6 +88,12 @@ class AIEngine:
             pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
             pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
 
+        if len(self.maze.make_perception_list(self.player, "")[4]):
+            self.door_state = self.maze.look_at_door(self.player, "")
+            solution = self.resolvePuzzle()
+            self.maze.unlock_door(solution)
+
+
         # if the coordinate is reached, remove it from the list
         if coordinate == (player_x, player_y) and len(self.shortest_graph_list) > 1:
             self.shortest_graph_list.pop(0)
@@ -111,3 +118,20 @@ class AIEngine:
                 pygame.event.post(pygame.event.Event(MOVE_PLAYER_UP))
             elif item[1] > 0:
                 pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
+
+    def resolvePuzzle(self):
+        try:
+            with PrologMQI() as mqi:
+                with mqi.create_thread() as prolog_thread:
+                    prolog_thread.query(f"consult('./prolog/enigme.pl')")
+                    crystals = self.door_state[0]
+                    crystals.pop(0)
+                    lock_color = self.door_state[0][0]
+                    query_string = f"remove_crystal({crystals}, {lock_color}, CrystalToRemove)"
+                    solutions = prolog_thread.query(query_string)
+                    if solutions:
+                        return solutions[0]['CrystalToRemove']
+                    else:
+                        return "No solution found"
+        except Exception as e:
+            return f"Error executing Prolog query: {e}"
