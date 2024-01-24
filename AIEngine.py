@@ -58,37 +58,34 @@ class AIEngine:
         player_x = self.player.get_position()[1] // 60
         player_y = self.player.get_position()[0] // 54
 
-        if self.maze.make_perception_list(self.player, "")[1]:
-            direction_to_move = self.dodgeObstacles()
-            # move the player in the direction computed by the fuzzy logic
-            if direction_to_move == LEFT:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_LEFT))
-            elif direction_to_move == RIGHT:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
-            elif direction_to_move == UP:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_UP))
-            elif direction_to_move == DOWN:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
-            elif direction_to_move == HALF_LEFT:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_LEFT))
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
-            elif direction_to_move == HALF_RIGHT:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
-        else:
-            # Move the player to the coordinate
-            if coordinate[0] < player_x:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_UP))
-                self.dodger.last_action = UP
-            elif coordinate[0] > player_x:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
-                self.dodger.last_action = DOWN
-            elif coordinate[1] < player_y:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_LEFT))
-                self.dodger.last_action = LEFT
-            elif coordinate[1] > player_y:
-                pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
-                self.dodger.last_action = RIGHT
+        self.direction_to_move = 0
+
+        # Move the player to the coordinate
+        if coordinate[0] < player_x:
+            self.direction_to_move = UP
+        elif coordinate[0] > player_x:
+            self.direction_to_move = DOWN
+        elif coordinate[1] < player_y:
+            self.direction_to_move = LEFT
+        elif coordinate[1] > player_y:
+            self.direction_to_move = RIGHT
+
+        self.direction_to_move = self.dodgeObstacles()
+        # move the player in the direction computed by the fuzzy logic
+        if self.direction_to_move == LEFT:
+            pygame.event.post(pygame.event.Event(MOVE_PLAYER_LEFT))
+        elif self.direction_to_move == RIGHT:
+            pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
+        elif self.direction_to_move == UP:
+            pygame.event.post(pygame.event.Event(MOVE_PLAYER_UP))
+        elif self.direction_to_move == DOWN:
+            pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
+        elif self.direction_to_move == HALF_LEFT:
+            pygame.event.post(pygame.event.Event(MOVE_PLAYER_LEFT))
+            pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
+        elif self.direction_to_move == HALF_RIGHT:
+            pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
+            pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
 
         # if the coordinate is reached, remove it from the list
         if coordinate == (player_x, player_y) and len(self.shortest_graph_list) > 1:
@@ -100,7 +97,7 @@ class AIEngine:
     def dodgeObstacles(self):
         vision = self.maze.make_perception_list(self.player, "")
         self.dodger.maze = self.maze
-        return self.dodger.dodge(vision, self.player)
+        return self.dodger.dodge(vision, self.player, self.direction_to_move)
 
     # If a coin or a treasure is near the player, the method will change the player direction to get it
     def getCoinTreasure(self):

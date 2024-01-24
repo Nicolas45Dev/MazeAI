@@ -45,7 +45,11 @@ class Dodger:
         self.dodger_ctrl = ctrl.ControlSystem(rules)
         self.dodger = ctrl.ControlSystemSimulation(self.dodger_ctrl)
 
-    def dodge(self, perception_list, player):
+    def dodge(self, perception_list, player, direction_to_move):
+
+        # if the perception list is empty return the last action taken
+        if len(perception_list[1]) == 0:
+            return direction_to_move
 
         player_size = player.get_size()
         player_pos = player.get_position()
@@ -65,16 +69,16 @@ class Dodger:
         obstacle_size_box_y = (obstacle_pos[1], obstacle_pos[1] + obstacle_size[1])
 
         # if the player can pass beside the obstacle dont dodge
-        if self.last_action == DOWN or self.last_action == UP:
+        if direction_to_move == DOWN or direction_to_move == UP:
             if player_size_box_x[0] > obstacle_size_box_x[1] or player_size_box_x[1] < obstacle_size_box_x[0]:
-                return self.last_action
+                return direction_to_move
         else:
             if player_size_box_y[0] > obstacle_size_box_y[1] or player_size_box_y[1] < obstacle_size_box_y[0]:
-                return self.last_action
+                return direction_to_move
 
         self.createFuzzyController()
 
-        if self.last_action == DOWN or self.last_action == UP:
+        if direction_to_move == DOWN or direction_to_move == UP:
             self.dodger.input['position'] = obstacle_pos_mapped[0]
         else:
             self.dodger.input['position'] = obstacle_pos_mapped[1]
@@ -84,16 +88,10 @@ class Dodger:
 
         # Translate the direction to a direction in the game
         discrete_direction = int(direction / 5)
-        direction_to_move = DOWN
         # possilbe directions are -2, -1, 0, 1, 2 print("discrete_direction: ", discrete_direction)
-        direction_to_move = self.decode_action(discrete_direction, self.last_action)
+        new_direction = self.decode_action(discrete_direction, self.last_action)
 
-        # Record the action taken
-        self.actions.append(direction_to_move)
-
-        # Update the last player position
-        self.last_player_position = player_pos
-        return direction_to_move
+        return new_direction
 
     # The method will return the action to take to dodge the obstacle
     # It will consider the last action taken and the last player position

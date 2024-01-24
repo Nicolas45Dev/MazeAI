@@ -14,7 +14,7 @@ if __name__ == '__main__':
     maze_file = 'assets/Mazes/mazeMedium_1'
 
     theAPP = App(maze_file)
-    player_zero = AIEngine(theAPP.player, "Jacques", maze_file, theAPP.maze)
+    player_zero = AIEngine(theAPP.player, "Lightning McQueen", maze_file, theAPP.maze)
     theAPP.on_execute(player_zero)
 
 
