@@ -55,6 +55,3 @@ find_last_position(Color, List, Position) :-
     nth1(Pos, ReversedList, Color),
     length(List, Length),
     Position is Length - Pos + 1.
-
-has context menuComposeParagraph
-% Path: prolog/enigme.pl

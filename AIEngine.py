@@ -90,7 +90,9 @@ class AIEngine:
 
         if len(self.maze.make_perception_list(self.player, "")[4]):
             self.door_state = self.maze.look_at_door(self.player, "")
-            solution = self.resolvePuzzle()
+            solution = ""
+            while solution == "":
+                solution = self.resolvePuzzle()
             self.maze.unlock_door(solution)
 
 
