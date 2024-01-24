@@ -203,9 +203,9 @@ class App:
                     self.timer += 0.01
                 self.on_AI_input(event.type)
             pygame.event.pump()
-            #keys = pygame.key.get_pressed()
+            keys = pygame.key.get_pressed()
             #print(self.player.get_position())
-            #self.on_keyboard_input(keys)
+            self.on_keyboard_input(keys)
 
             if self.on_coin_collision():
                 self.score += 1
