@@ -33,7 +33,7 @@ class App:
         self._running = True
         self.maze.make_maze_wall_list()
         self.maze.make_maze_item_lists()
-        self._image_surf = pygame.image.load("assets/Images/knight.png")
+        self._image_surf = pygame.image.load("assets/Images/mcqueen.png")
         self.player.set_position(self.maze.start[0], self.maze.start[1])
         self.player.set_size(PLAYER_SIZE*self.maze.tile_size_x, PLAYER_SIZE*self.maze.tile_size_x)
         self._image_surf = pygame.transform.scale(self._image_surf, self.player.get_size())
