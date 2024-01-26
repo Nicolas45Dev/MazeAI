@@ -9,7 +9,7 @@ from Maze import Maze
 import ObstacleDodger
 from Constants import *
 from swiplserver import PrologMQI
-from MonsterKiller import MonsterKiller
+from MonsterKiller import KillMonster
 
 MOVE_PLAYER_RIGHT = pygame.USEREVENT + 1
 MOVE_PLAYER_LEFT = pygame.USEREVENT + 2
@@ -27,7 +27,8 @@ class AIEngine:
         self.graphic_maze = MazeSolver(maze_file)
         self.dodger = ObstacleDodger.Dodger()
         self.tuile_size = (self.maze.tile_size_x, self.maze.tile_size_y)
-        self.monster_killer = MonsterKiller(maze, player)
+        self.monster_killer = KillMonster(60, 0.01, 40, 0.8, 0.1, maze)
+        self.kill = 0;
 
     def index_2d(self, list, item):
         for i, x in enumerate(list):
@@ -93,9 +94,12 @@ class AIEngine:
         if len(self.maze.make_perception_list(self.player, "")[3]):
             monster = self.maze.make_perception_list(self.player, "")[3][0]
             solution = None
-            while solution == None:
-                solution = self.monster_killer.genetic_algorithm(monster)
-            self.player.set_attributes(solution)
+            while solution == None and self.kill == 0:
+                self.monster_killer.setMonster(monster)
+                solution = self.monster_killer.genetic_algorithm()
+                self.player.set_attributes(solution)
+                self.kill = 1
+
 
         if len(self.maze.make_perception_list(self.player, "")[4]):
             self.door_state = self.maze.look_at_door(self.player, "")
