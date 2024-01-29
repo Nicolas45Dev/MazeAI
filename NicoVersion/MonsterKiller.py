@@ -18,9 +18,8 @@ class Individu:
 
 class MonsterKiller:
 
-    def __init__(self, maze):
+    def __init__(self):
         self.monster = None
-        self.maze = maze
         self.player = Player()
         self.population_size = POPULATION_SIZE
         self.crossover_rate = CROSSOVER_RATE

@@ -23,8 +23,7 @@ class AIEngine:
         self.instruction = ''
 
         self.obstacle_dodger = ObstacleDodger(self.maze)
-        self.tuile_size = (self.maze.tile_size_x, self.maze.tile_size_y)
-        self.monster_killer = MonsterKiller(maze)
+        self.monster_killer = MonsterKiller()
         self.monster = None
 
         self.topWall = None
@@ -44,7 +43,6 @@ class AIEngine:
         current_pos = [player_rect.centery, player_rect.centerx]
         current_map_tile = [current_pos[0]//self.maze.tile_size_y, current_pos[1]//self.maze.tile_size_x]
 
-
         # get next tile
         next_map_tile = self.path[self.nextPathIndex]
         next_pos = [(next_map_tile[0] + 0.5)*self.maze.tile_size_y, (next_map_tile[1] + 0.5)*self.maze.tile_size_x]
@@ -55,7 +53,10 @@ class AIEngine:
         next_tile_left = next_map_tile[1] * self.maze.tile_size_x
 
         # Check if player is fully on the tile
-        if next_tile_top <= player_rect.top and next_tile_right >= player_rect.right and next_tile_bottom >= player_rect.bottom and next_tile_left <= player_rect.left:
+        if  next_tile_top <= player_rect.top and \
+            next_tile_right >= player_rect.right and \
+            next_tile_bottom >= player_rect.bottom and \
+            next_tile_left <= player_rect.left:
             #print('Next position -----------------------------------------------------------')
             self.nextPathIndex += 1
             next_map_pos = self.path[self.nextPathIndex]
@@ -78,16 +79,27 @@ class AIEngine:
 
         [walls, obstacles, items, monsters, doors] = self.maze.make_perception_list(self.player, "")
 
-        # Reset wall
+        # Check for obstacle
+        next_instruction = self.checkForObstacles(obstacles, walls, player_rect, next_instruction)
+
+        # Check for monster
+        self.checkForMonsters(monsters)
+
+        # Check for door
+        self.checkForDoors(doors)
+
+        # Send the instruction
+        self.instruction = next_instruction
+        return self.instruction
+
+    def checkForWalls(self, walls, player_rect, next_instruction):
         self.topWall = None
         self.rightWall = None
         self.bottomWall = None
         self.leftWall = None
 
-        # Trouver les mur bloquant
-        if self.checkForWalls(walls):
+        if len(walls):
             for wall in walls:
-                #print(f"Wall({wall.center})")
                 # For the right wall
                 if wall.left > player_rect.right:
                     if wall.top <= player_rect.top and wall.bottom >= player_rect.top and next_instruction != UP:
@@ -148,66 +160,44 @@ class AIEngine:
                     x -= 1
                 self.setLeftWall(x * self.maze.tile_size_x + self.maze.tile_size_x)
 
-        # Check for obstacle
-        if self.checkForObstacles(obstacles):
+    def checkForObstacles(self, obstacles, walls, player_rect, next_instruction):
+        if len(obstacles):
             closest_obstacle = None
             distance = 0
             for obstacle in obstacles:
                 if next_instruction == UP or next_instruction == DOWN:
                     if player_rect.left < obstacle.right and player_rect.right > obstacle.left:
-                        temp = (player_rect.centerx - obstacle.centerx)**2 + (player_rect.centery - obstacle.centery)**2
+                        temp = (player_rect.centerx - obstacle.centerx) ** 2 + (player_rect.centery - obstacle.centery) ** 2
                         if closest_obstacle is None or temp < distance:
                             closest_obstacle = obstacle
                             distance = temp
                 elif next_instruction == RIGHT or next_instruction == LEFT:
                     if player_rect.bottom > obstacle.top and player_rect.top < obstacle.bottom:
-                        temp = (player_rect.centerx - obstacle.centerx)**2 + (player_rect.centery - obstacle.centery)**2
+                        temp = (player_rect.centerx - obstacle.centerx) ** 2 + (player_rect.centery - obstacle.centery) ** 2
                         if closest_obstacle is None or temp < distance:
                             closest_obstacle = obstacle
                             distance = temp
             if closest_obstacle is not None:
-                next_instruction = self.obstacle_dodger.dodge(closest_obstacle, player_rect, next_instruction, self.topWall, self.rightWall, self.bottomWall, self.leftWall)
+                self.checkForWalls(walls, player_rect, next_instruction)
+                return self.obstacle_dodger.dodge(closest_obstacle, player_rect, next_instruction, self.topWall, self.rightWall, self.bottomWall, self.leftWall)
+        return next_instruction
 
-        # Check for monster
-        if self.checkForMonsters(monsters) and self.monster == None:
-            #print("Monster detected")
+    def checkForMonsters(self, monsters):
+        if len(monsters) and self.monster == None:
+            # print("Monster detected")
+            self.monster_killer = MonsterKiller()
             self.monster = self.maze.make_perception_list(self.player, "")[3][0]
             solution = self.monster_killer.genetic_algorithm(self.monster)
             self.player.set_attributes(solution)
-        elif self.monster not in self.maze.make_perception_list(self.player, "")[3]:
+        elif self.monster not in monsters:
             self.monster = None
-
-        # Check for door
-        if self.checkForDoors(doors):
-            #print("Door detected")
-            self.door_state = self.maze.look_at_door(self.player, "")
-            solution = self.resolvePuzzle()
-            self.maze.unlock_door(solution)
-
-        # Send the instruction
-        self.instruction = next_instruction
-        return self.instruction
-
-    def checkForWalls(self, walls):
-        if len(walls):
-            return True
-        return  False
-
-    def checkForObstacles(self, obstacles):
-        if len(obstacles):
-            # Check if obstacle is in the direction
-            return True
-        return False
-
-    def checkForMonsters(self, monsters):
-        if len(monsters):
-            return True
-        return False
 
     def checkForDoors(self, doors):
         if len(doors):
-            return True
-        return False
+            # print("Door detected")
+            self.door_state = self.maze.look_at_door(self.player, "")
+            solution = self.resolvePuzzle()
+            self.maze.unlock_door(solution)
 
     def setTopWall(self, topWall):
         if self.topWall is not None:
