@@ -56,7 +56,7 @@ class AIEngine:
 
         # Check if player is fully on the tile
         if next_tile_top <= player_rect.top and next_tile_right >= player_rect.right and next_tile_bottom >= player_rect.bottom and next_tile_left <= player_rect.left:
-            print('Next position -----------------------------------------------------------')
+            #print('Next position -----------------------------------------------------------')
             self.nextPathIndex += 1
             next_map_pos = self.path[self.nextPathIndex]
             next_pos = [(next_map_tile[0] + 0.5) * self.maze.tile_size_y,
@@ -166,11 +166,11 @@ class AIEngine:
                             closest_obstacle = obstacle
                             distance = temp
             if closest_obstacle is not None:
-                next_instruction = self.obstacle_dodger.new_dodge(closest_obstacle, player_rect, next_instruction, self.topWall, self.rightWall, self.bottomWall, self.leftWall)
+                next_instruction = self.obstacle_dodger.dodge(closest_obstacle, player_rect, next_instruction, self.topWall, self.rightWall, self.bottomWall, self.leftWall)
 
         # Check for monster
         if self.checkForMonsters(monsters) and self.monster == None:
-            print("Monster detected")
+            #print("Monster detected")
             self.monster = self.maze.make_perception_list(self.player, "")[3][0]
             solution = self.monster_killer.genetic_algorithm(self.monster)
             self.player.set_attributes(solution)
@@ -179,7 +179,7 @@ class AIEngine:
 
         # Check for door
         if self.checkForDoors(doors):
-            print("Door detected")
+            #print("Door detected")
             self.door_state = self.maze.look_at_door(self.player, "")
             solution = self.resolvePuzzle()
             self.maze.unlock_door(solution)
