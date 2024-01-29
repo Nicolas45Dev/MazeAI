@@ -63,7 +63,7 @@ class MazeSolver():
             current_node = open_list[0]
             current_index = 0
             for index, item in enumerate(open_list):
-                print(item.position)
+                #print(item.position)
                 if item.f < current_node.f:
                     current_node = item
                     current_index = index
@@ -89,7 +89,7 @@ class MazeSolver():
                 # Get node position
                 node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
 
-                print(current_node.position," -> ",node_position)
+                #print(current_node.position," -> ",node_position)
 
                 # Make sure within row range
                 if node_position[0] < 0 or node_position[0] > (len(self.maze) - 1):

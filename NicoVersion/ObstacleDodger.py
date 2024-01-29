@@ -80,14 +80,14 @@ class ObstacleDodger:
             canPassLeft = obstacle.left % self.maze.tile_size_x >= player.width
             canPassRight = self.maze.tile_size_x - (obstacle.right % self.maze.tile_size_x) >= player.width
 
-            print(f"Can pass right({canPassRight}) Can pass left({canPassLeft}) Obstacle({obstacle}) Player({player})")
+            #print(f"Can pass right({canPassRight}) Can pass left({canPassLeft}) Obstacle({obstacle}) Player({player})")
             if canPassLeft or canPassRight:
                 half = self.maze.tile_size_x // 2
                 self.dodger.input['position_obstacle'] = (((obstacle.centerx % self.maze.tile_size_x) - half) * 10) / half
                 self.dodger.input['position_player'] = (((player.centerx % self.maze.tile_size_x) - half) * 10) / half
             else:
                 print("Player can't pass on the left or the right inside the tile")
-                print(f"Left wall({leftWall}) Right wall({rightWall})")
+                #print(f"Left wall({leftWall}) Right wall({rightWall})")
                 half = (rightWall - leftWall) // 2
                 middle = half + leftWall
                 self.dodger.input['position_obstacle'] = ((obstacle.centerx - middle) * 10) / half
@@ -102,7 +102,7 @@ class ObstacleDodger:
                 self.dodger.input['position_player'] = (((player.centery % self.maze.tile_size_y) - half) * 10) / half
             else:
                 print("Player can't pass over or under the obstacle inside the tile")
-                print(f"Top wall({topWall}) Bottom wall({bottomWall})")
+                #print(f"Top wall({topWall}) Bottom wall({bottomWall})")
                 half = (bottomWall - topWall) // 2
                 middle = half + topWall
                 self.dodger.input['position_obstacle'] = ((obstacle.centery - middle) * 10) / half
@@ -120,7 +120,7 @@ class ObstacleDodger:
 
         self.dodger.compute()
         direction = self.dodger.output['direction']
-        print(f"Direction({direction})")
+        #print(f"Direction({direction})")
 
         # Check for direction (-1, 0, 1)
         if direction == 0:
@@ -136,34 +136,4 @@ class ObstacleDodger:
             elif direction_to_move == RIGHT or direction_to_move == LEFT:
                 return DOWN
 
-
-
-        #else:
-        #    if direction_to_move == UP:
-        #        if direction == -1:
-        #            return
-        #    elif direction_to_move == RIGHT:
-
-
-
-
-        #new_direction = self.decode_action(discrete_direction, self.last_action)
-
-
-
-
-
-        #if direction_to_move == DOWN or direction_to_move == UP:
-        #    self.dodger.input['position'] = obstacle_pos_mapped[0]
-        #else:
-        #    self.dodger.input['position'] = obstacle_pos_mapped[1]
-
-
-
-        # Translate the direction to a direction in the game
-        #discrete_direction = int(direction / 5)
-        # possilbe directions are -2, -1, 0, 1, 2 print("discrete_direction: ", discrete_direction)
-        #new_direction = self.decode_action(discrete_direction, self.last_action)
-
-        #return new_direction
         return direction_to_move
