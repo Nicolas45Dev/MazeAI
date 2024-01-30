@@ -83,15 +83,15 @@ class ObstacleDodger:
         direction = ctrl.Consequent(np.arange(-1, 2, 1), 'direction')
 
         # define rules
-        position_obstacle['left'] = fuzz.trimf(position_obstacle.universe, [-10, -10, -6])
+        position_obstacle['left'] = fuzz.trimf(position_obstacle.universe, [-10, -10, -4])
         position_obstacle['left-center'] = fuzz.trimf(position_obstacle.universe, [-8, -3, 2])
         position_obstacle['right-center'] = fuzz.trimf(position_obstacle.universe, [-2, 3, 8])
-        position_obstacle['right'] = fuzz.trimf(position_obstacle.universe, [6, 10, 10])
+        position_obstacle['right'] = fuzz.trimf(position_obstacle.universe,[ 4, 10, 10])
 
-        position_player['left'] = fuzz.trimf(position_player.universe, [-10, -10, -6])
+        position_player['left'] = fuzz.trimf(position_player.universe, [-10, -10, -4])
         position_player['left-center'] = fuzz.trimf(position_player.universe, [-8, -3, 2])
         position_player['right-center'] = fuzz.trimf(position_player.universe, [-2, 3, 8])
-        position_player['right'] = fuzz.trimf(position_player.universe, [6, 10, 10])
+        position_player['right'] = fuzz.trimf(position_player.universe, [4, 10, 10])
 
         distance['near'] = fuzz.trimf(distance.universe, [0, 0, 4])
         distance['medium'] = fuzz.trimf(distance.universe, [0, 5, 10])
@@ -101,10 +101,10 @@ class ObstacleDodger:
         direction['straight'] = fuzz.trimf(direction.universe, [-0.5, 0, 0.5])
         direction['right'] = fuzz.trimf(direction.universe, [-0.5, 1, 1])
 
-        # position_obstacle.view()
-        # position_player.view()
-        # distance.view()
-        # direction.view()
+        position_obstacle.view()
+        position_player.view()
+        distance.view()
+        direction.view()
 
         rules = []
         rules.append(ctrl.Rule(distance['far'], direction['straight']))
@@ -162,7 +162,7 @@ class ObstacleDodger:
         self.dodger_ctrl = ctrl.ControlSystem(rules)
         self.dodger = ctrl.ControlSystemSimulation(self.dodger_ctrl)
 
-    def dodge(self, obstacle: pygame.Rect, player: pygame.Rect, direction_to_move, topWall, rightWall, bottomWall, leftWall):
+    def dodge(self, obstacle: pygame.Rect, player: pygame.Rect, direction_to_move):
         if self.dodger is None:
             self.new_createFuzzyController()
 
@@ -180,12 +180,8 @@ class ObstacleDodger:
                 self.dodger.input['position_player'] = (((player.centerx % self.maze.tile_size_x) - half) * 10) / half
             else:
                 print("Player can't pass on the left or the right inside the tile")
-                return (None, True)
-                #print(f"Left wall({leftWall}) Right wall({rightWall})")
-                #half = (rightWall - leftWall) // 2
-                #middle = half + leftWall
-                #self.dodger.input['position_obstacle'] = ((obstacle.centerx - middle) * 10) / half
-                #self.dodger.input['position_player'] = ((player.centerx - middle) * 10) / half
+                return NO_PATH
+
         else:
             canPassOver = obstacle.top % self.maze.tile_size_y > player.height
             canPassUnder = self.maze.tile_size_y - (obstacle.bottom % self.maze.tile_size_y) > player.height
@@ -196,12 +192,8 @@ class ObstacleDodger:
                 self.dodger.input['position_player'] = (((player.centery % self.maze.tile_size_y) - half) * 10) / half
             else:
                 print("Player can't pass over or under the obstacle inside the tile")
-                return (None, True)
-                #print(f"Top wall({topWall}) Bottom wall({bottomWall})")
-                #half = (bottomWall - topWall) // 2
-                #middle = half + topWall
-                #self.dodger.input['position_obstacle'] = ((obstacle.centery - middle) * 10) / half
-                #self.dodger.input['position_player'] = ((player.centery - middle) * 10) / half
+                return NO_PATH
+
 
         # For the distance
         if direction_to_move == UP:
@@ -220,13 +212,13 @@ class ObstacleDodger:
         # Check for direction (-1, 0, 1)
         if direction <= -0.1:
             if direction_to_move == UP or direction_to_move == DOWN:
-                return (LEFT, False)
+                return LEFT
             elif direction_to_move == RIGHT or direction_to_move == LEFT:
-                return (UP, False)
+                return UP
         elif direction >= 0.1:
             if direction_to_move == UP or direction_to_move == DOWN:
-                return (RIGHT, False)
+                return RIGHT
             elif direction_to_move == RIGHT or direction_to_move == LEFT:
-                return (DOWN, False)
+                return DOWN
 
-        return (direction_to_move, False)
+        return direction_to_move

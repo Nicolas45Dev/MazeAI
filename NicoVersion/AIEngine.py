@@ -188,16 +188,6 @@ class AIEngine:
             closest_distance = 0
             for obstacle in obstacles:
                 if self.isObstacleBlockingPlayer(obstacle, player_rect, next_instruction):
-                    distance = 0
-                    #if next_instruction == UP:
-                    #    distance = player_rect.centery - obstacle.centery
-                    #elif next_instruction == RIGHT:
-                    #    distance = obstacle.centerx - player_rect.centerx
-                    #elif next_instruction == DOWN:
-                    #    distance = obstacle.centery - player_rect.centery
-                    #elif next_instruction == LEFT:
-                    #    distance = player_rect.centerx - obstacle.centerx
-
                     distance = (player_rect.centerx - obstacle.centerx) ** 2 + (player_rect.centery - obstacle.centery) ** 2
                     if closest_obstacle is None or distance < closest_distance:
                         closest_obstacle = obstacle
@@ -207,12 +197,12 @@ class AIEngine:
 
         # Avoid the obstacle if any
         if self.obstacle is not None:
-            self.checkForWalls(walls, player_rect, next_instruction)
+            #self.checkForWalls(walls, player_rect, next_instruction)
             print(f"Avoiding {self.obstacle}")
-            (new_instruction, isStuck) = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction, self.topWall,
-                                              self.rightWall, self.bottomWall, self.leftWall)
+            #new_instruction = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction, self.topWall,self.rightWall, self.bottomWall, self.leftWall)
+            new_instruction = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction)
 
-            if isStuck:
+            if new_instruction == NO_PATH:
                 print("Player can't pass. Recomputing the path")
                 if self.nextPathIndex + 1 > len(self.path)-1:
                     print('Cant access tue exit')
@@ -221,7 +211,7 @@ class AIEngine:
                     ox = self.path[self.nextPathIndex + 1][1]
                     print(f"Changing {self.path[self.nextPathIndex]} to a wall")
 
-                    self.maze.maze[oy][ox] = WALL[0]
+                    self.maze.maze[oy][ox] = WALL
                     py = int(player_rect.centery // self.maze.tile_size_y)
                     px = int(player_rect.centerx // self.maze.tile_size_x)
                     self.mazeSolver.setStart(py, px)

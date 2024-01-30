@@ -24,7 +24,7 @@ OBSTACLE = 'O'
 MONSTER = 'M'
 DOOR = 'D'
 
-WALL = ['1']
+WALL = '1'
 SLOWING_OBSTACLE = ['O', 'M']
 ADDING_ATTRIBUTES = ['C', 'T', 'D']
 

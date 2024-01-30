@@ -78,16 +78,6 @@ class MazeSolver():
             print("-----------------------------------------------------")
             # Get the current node
             current_node = heapq.heappop(open_list)[1]
-            #current_index = 0
-            #for index, item in enumerate(open_list):
-                #print(item.position)
-                #if item.f < current_node.f:
-                    #current_node = item
-                    #current_index = index
-
-            # Pop current off open list, add to closed list
-            #open_list.pop(current_index)
-            #closed_list.append(current_node)
 
             if counter % 50 == 1:
                 print(closed_list)
@@ -125,14 +115,12 @@ class MazeSolver():
                     continue
 
                 # Make sure walkable terrain
-                if self.maze[node_position[0]][node_position[1]] in WALL:
+                if self.maze[node_position[0]][node_position[1]] == WALL:
                     continue
 
                 # Make sure node isn`t a parent
                 if current_node.passedBy(node_position):
                     continue
-
-                #if current_node
 
                 # Create new node
                 new_node = Node(current_node, node_position)
@@ -145,11 +133,6 @@ class MazeSolver():
 
                 if child.position in closed_list:
                     continue
-                # Child is on the closed list
-                #for closed_child in closed_list:
-                #    if child == closed_child:
-                #        print(f"({child.position}) alredy in closed_list")
-                #        continue
 
                 # Create the f, g, and h values
                 child.g = current_node.g + 1
@@ -161,16 +144,8 @@ class MazeSolver():
                     if node[1].position == child.position and node[1].g <= child.g:
                         continue
 
-                # Child is already in the open list
-                #for index, open_node in enumerate(open_list):
-                #    if child == open_node:
-                #        if child.g > open_node.g:
-                #            continue
-                #        else:
-                #            open_list.pop(index)
 
                 # Add the child to the open list
-                #open_list.append(child)
                 heapq.heappush(open_list, (child.f, child))
 
             counter += 1
