@@ -158,3 +158,15 @@ class Maze:
         for door in self.doorList:
             if door.unlock_door(key):
                 self.doorList.remove(door)
+
+    def is_walkable(self, player_rect):
+        top_left_x = position[0]
+        top_left_y = position[1]
+        player_rect = pygame.Rect(top_left_x, top_left_y, PLAYER_SIZE * self.tile_size_x, PLAYER_SIZE * self.tile_size_x)
+        wall_collision = player_rect.collidelist(self.wallList)
+        obstacle_collision = player_rect.collidelist(self.obstacleList)
+        if wall_collision != -1:
+            return False
+        if obstacle_collision != -1:
+            return False
+        return True

@@ -170,8 +170,8 @@ class ObstacleDodger:
 
         # For the positions
         if direction_to_move == DOWN or direction_to_move == UP:
-            canPassLeft = obstacle.left % self.maze.tile_size_x >= player.width
-            canPassRight = self.maze.tile_size_x - (obstacle.right % self.maze.tile_size_x) >= player.width
+            canPassLeft = obstacle.left % self.maze.tile_size_x > player.width
+            canPassRight = self.maze.tile_size_x - (obstacle.right % self.maze.tile_size_x) > player.width
 
             #print(f"Can pass right({canPassRight}) Can pass left({canPassLeft}) Obstacle({obstacle}) Player({player})")
             if canPassLeft or canPassRight:
@@ -180,14 +180,15 @@ class ObstacleDodger:
                 self.dodger.input['position_player'] = (((player.centerx % self.maze.tile_size_x) - half) * 10) / half
             else:
                 print("Player can't pass on the left or the right inside the tile")
+                return (None, True)
                 #print(f"Left wall({leftWall}) Right wall({rightWall})")
-                half = (rightWall - leftWall) // 2
-                middle = half + leftWall
-                self.dodger.input['position_obstacle'] = ((obstacle.centerx - middle) * 10) / half
-                self.dodger.input['position_player'] = ((player.centerx - middle) * 10) / half
+                #half = (rightWall - leftWall) // 2
+                #middle = half + leftWall
+                #self.dodger.input['position_obstacle'] = ((obstacle.centerx - middle) * 10) / half
+                #self.dodger.input['position_player'] = ((player.centerx - middle) * 10) / half
         else:
-            canPassOver = obstacle.top % self.maze.tile_size_y >= player.height
-            canPassUnder = self.maze.tile_size_y - (obstacle.bottom % self.maze.tile_size_y) >= player.height
+            canPassOver = obstacle.top % self.maze.tile_size_y > player.height
+            canPassUnder = self.maze.tile_size_y - (obstacle.bottom % self.maze.tile_size_y) > player.height
 
             if canPassOver or canPassUnder:
                 half = self.maze.tile_size_y // 2
@@ -195,11 +196,12 @@ class ObstacleDodger:
                 self.dodger.input['position_player'] = (((player.centery % self.maze.tile_size_y) - half) * 10) / half
             else:
                 print("Player can't pass over or under the obstacle inside the tile")
+                return (None, True)
                 #print(f"Top wall({topWall}) Bottom wall({bottomWall})")
-                half = (bottomWall - topWall) // 2
-                middle = half + topWall
-                self.dodger.input['position_obstacle'] = ((obstacle.centery - middle) * 10) / half
-                self.dodger.input['position_player'] = ((player.centery - middle) * 10) / half
+                #half = (bottomWall - topWall) // 2
+                #middle = half + topWall
+                #self.dodger.input['position_obstacle'] = ((obstacle.centery - middle) * 10) / half
+                #self.dodger.input['position_player'] = ((player.centery - middle) * 10) / half
 
         # For the distance
         if direction_to_move == UP:
@@ -218,13 +220,13 @@ class ObstacleDodger:
         # Check for direction (-1, 0, 1)
         if direction <= -0.1:
             if direction_to_move == UP or direction_to_move == DOWN:
-                return LEFT
+                return (LEFT, False)
             elif direction_to_move == RIGHT or direction_to_move == LEFT:
-                return UP
+                return (UP, False)
         elif direction >= 0.1:
             if direction_to_move == UP or direction_to_move == DOWN:
-                return RIGHT
+                return (RIGHT, False)
             elif direction_to_move == RIGHT or direction_to_move == LEFT:
-                return DOWN
+                return (DOWN, False)
 
-        return direction_to_move
+        return (direction_to_move, False)

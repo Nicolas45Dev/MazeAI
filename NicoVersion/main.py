@@ -16,6 +16,7 @@ if __name__ == '__main__':
     #theAPP = App('assets/Mazes/mazeLarge_1')
     #theAPP = App('assets/Mazes/MazeLarge_2')
     theAPP = App('assets/Mazes/MazeLarge_3')
+    #theAPP = App('assets/Mazes/mazeTest_0')
     theAPP.on_execute()
 
 

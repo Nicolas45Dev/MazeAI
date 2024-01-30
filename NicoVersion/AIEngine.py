@@ -32,6 +32,9 @@ class AIEngine:
         self.leftWall = None
         self.obstacle = None
 
+        self.lastPosition = self.player.get_rect().center
+        self.stuckCounter = 0
+
     def getInstruction(self):
         # Make sure the path is computed
         if not self.path:
@@ -39,6 +42,13 @@ class AIEngine:
 
         # get player rectangle
         player_rect = self.player.get_rect()
+
+        if player_rect.center == self.lastPosition:
+            self.stuckCounter += 1
+            if self.stuckCounter >= 5:
+                print('Player is stuck')
+        else:
+            self.stuckCounter = 0
 
         # get current position
         current_pos = [player_rect.centery, player_rect.centerx]
@@ -91,6 +101,7 @@ class AIEngine:
 
         # Send the instruction
         self.instruction = next_instruction
+        self.lastPosition = player_rect.center
         return self.instruction
 
     def checkForWalls(self, walls, player_rect, next_instruction):
@@ -187,15 +198,32 @@ class AIEngine:
                     if closest_obstacle is None or distance < closest_distance:
                         closest_obstacle = obstacle
                         closest_distance = distance
-            print(f"Distance {closest_distance}")
+            #print(f"Distance {closest_distance}")
             self.obstacle = closest_obstacle
 
         # Avoid the obstacle if any
         if self.obstacle is not None:
             self.checkForWalls(walls, player_rect, next_instruction)
             print(f"Avoiding {self.obstacle}")
-            new_instruction = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction, self.topWall,
+            (new_instruction, isStuck) = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction, self.topWall,
                                               self.rightWall, self.bottomWall, self.leftWall)
+
+            if isStuck:
+                print("Player can't pass. Recomputing the path")
+                oy = self.path[self.nextPathIndex + 1][0]
+                ox = self.path[self.nextPathIndex + 1][1]
+                print(f"Changing {self.path[self.nextPathIndex]} to a wall")
+
+                self.maze.maze[oy][ox] = WALL[0]
+                py = int(player_rect.centery // self.maze.tile_size_y)
+                px = int(player_rect.centerx // self.maze.tile_size_x)
+                self.mazeSolver.setStart(py, px)
+                #self.mazeSolver.setExit(self.path[self.nextPathIndex -5][0], self.path[self.nextPathIndex -5][1])
+
+
+                self.path = self.mazeSolver.computePath()
+                print(f" new Path {self.path}")
+                self.nextPathIndex = 1
 
             # Check if there is an obstacle blocking the new instruction
             for obstacle in obstacles:
@@ -239,7 +267,6 @@ class AIEngine:
                 return True
 
         return False
-
 
     def setTopWall(self, topWall):
         if self.topWall is not None:
