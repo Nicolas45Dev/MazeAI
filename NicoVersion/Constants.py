@@ -35,3 +35,5 @@ UP = 1
 LEFT = 2
 RIGHT = 3
 
+NO_PATH = 4
+

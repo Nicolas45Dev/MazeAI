@@ -40,6 +40,10 @@ class AIEngine:
         if not self.path:
             self.path = self.mazeSolver.computePath()
 
+        if len(self.path) == 0:
+            print('There is no path')
+            return NO_PATH
+
         # get player rectangle
         player_rect = self.player.get_rect()
 
@@ -210,20 +214,21 @@ class AIEngine:
 
             if isStuck:
                 print("Player can't pass. Recomputing the path")
-                oy = self.path[self.nextPathIndex + 1][0]
-                ox = self.path[self.nextPathIndex + 1][1]
-                print(f"Changing {self.path[self.nextPathIndex]} to a wall")
+                if self.nextPathIndex + 1 > len(self.path)-1:
+                    print('Cant access tue exit')
+                else:
+                    oy = self.path[self.nextPathIndex + 1][0]
+                    ox = self.path[self.nextPathIndex + 1][1]
+                    print(f"Changing {self.path[self.nextPathIndex]} to a wall")
 
-                self.maze.maze[oy][ox] = WALL[0]
-                py = int(player_rect.centery // self.maze.tile_size_y)
-                px = int(player_rect.centerx // self.maze.tile_size_x)
-                self.mazeSolver.setStart(py, px)
-                #self.mazeSolver.setExit(self.path[self.nextPathIndex -5][0], self.path[self.nextPathIndex -5][1])
+                    self.maze.maze[oy][ox] = WALL[0]
+                    py = int(player_rect.centery // self.maze.tile_size_y)
+                    px = int(player_rect.centerx // self.maze.tile_size_x)
+                    self.mazeSolver.setStart(py, px)
 
-
-                self.path = self.mazeSolver.computePath()
-                print(f" new Path {self.path}")
-                self.nextPathIndex = 1
+                    self.path = self.mazeSolver.computePath()
+                    print(f" new Path {self.path}")
+                    self.nextPathIndex = 1
 
             # Check if there is an obstacle blocking the new instruction
             for obstacle in obstacles:

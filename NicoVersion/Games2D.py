@@ -207,8 +207,13 @@ class App:
             self.on_keyboard_input(keys)
 
             instruction = self.AI.getInstruction()
-            #print("Instruction = ", instruction)
-            self.on_AI_input(instruction)
+
+            if instruction is NO_PATH:
+                self._dead = True
+                continue
+            else:
+                #print("Instruction = ", instruction)
+                self.on_AI_input(instruction)
 
             if self.on_coin_collision():
                 self.score += 1
