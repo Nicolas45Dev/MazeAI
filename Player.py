@@ -2,7 +2,6 @@ import pygame
 import random
 from Constants import *
 
-
 class Player:
     x = 0
     y = 0

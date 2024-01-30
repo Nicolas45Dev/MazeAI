@@ -1,88 +1,114 @@
 import pygame
 import random
-from Constants import *
-from Monster import *
-from Maze import *
+import Maze
 from Player import Player
-from Individu import Individu
+from Constants import *
 
-KILL_LIMIT = 4
+POPULATION_SIZE = 300
+CROSSOVER_RATE = 0.90
+MUTATION_RATE = 0.1
+ELITE_RATIO = 0.1
+GENERATION_RESTART = 1000
 
+class Individu:
+    def __init__(self, attributes):
+        self.attributes = attributes
+        self.fitness = -100
+        self.kill = 0
 
-class KillMonster:
-    def __init__(self, pop_size=2, mutation_rate=0.01, generations=10, crossover_rate=0.8, elite_ratio=0.1):
-        self.population_size = pop_size
-        self.mutation_rate = mutation_rate
-        self.crossover_rate = crossover_rate
-        self.generations = generations
-        self.maxKill = KILL_LIMIT
-        self.bestKill = 0
-        self.bestFitness = 0
-        self.current_gen = 0
-        self.elite_ratio = elite_ratio
-        self.bestIndividual = []
-        self.population = []
+class MonsterKiller:
+
+    def __init__(self):
         self.monster = None
-        self.scores = []
-        self.kill = []
-        self.Player = Player()
+        self.player = Player()
+        self.population_size = POPULATION_SIZE
+        self.crossover_rate = CROSSOVER_RATE
+        self.mutation_rate = MUTATION_RATE
+        self.population = None
+        self.generation = 1
+        self.restart = 0
 
-    def __init__(self, pop_size=2, mutation_rate=0.01, generations=10, crossover_rate=0.8, elite_ratio=0.1, maze=None):
-        self.population_size = pop_size
-        self.mutation_rate = mutation_rate
-        self.crossover_rate = crossover_rate
-        self.generations = generations
-        self.maxKill = KILL_LIMIT
-        self.bestKill = 0
-        self.bestFitness = 0
-        self.current_gen = 0
-        self.elite_ratio = elite_ratio
-        self.bestIndividual = []
-        self.population = []
-        self.monster = None
-        self.maze = maze
-        self.kill = []
-        self.scores = []
-        self.Player = Player()
+    def generate_individual(self):
+        attributes = [random.randint(-1000, 1000) for _ in range(NUM_ATTRIBUTES)]
+        return Individu(attributes)
 
-    # Générer une population initiale
-    def generate_population(self, size):
-        for _ in range(size):
-            gnome = Individu.create_gnome()
-            self.population.append(Individu(gnome, self.monster, self.Player))
+    def evaluate_population(self):
+        for i in range(POPULATION_SIZE - 1):
+            individual = self.population[i]
+            self.player.set_attributes(individual.attributes)
+            individual.kill, individual.fitness = self.monster.mock_fight(self.player)
 
-    # Sélectionner un monstre
-    def setMonster(self, monster):
+    def crossover(self, p1, p2):
+        if random.random() < CROSSOVER_RATE:
+            crossover_point = random.randint(0, NUM_ATTRIBUTES - 1)
+            c1 = p1.attributes[:crossover_point] + p2.attributes[crossover_point:]
+            c2 = p2.attributes[:crossover_point] + p1.attributes[crossover_point:]
+
+            return Individu(c1), Individu(c2)
+        return p1, p2
+
+    def mutate(self, individual):
+        if random.random() < MUTATION_RATE:
+            index = random.randint(0, NUM_ATTRIBUTES - 1)
+            individual.attributes[index] = random.randint(-1000, 1000)
+
+    def genetic_algorithm(self, monster):
         self.monster = monster
+        self.population = [self.generate_individual() for _ in range(POPULATION_SIZE)]
 
+        while True:
+            self.evaluate_population()
 
-    def genetic_algorithm(self):
-        self.generate_population(self.population_size)
-        scores = []
-        while 1:
-            # Sort the best individuals
-            self.population = sorted(self.population, key=lambda x: x.fitness, reverse=True)
-            for i in range(self.population_size):
-                scores.append(self.population[i].scores)
+            # Sort population from best to worst
+            self.population.sort(key=lambda x: x.fitness, reverse=True)
 
-            self.bestKill = max(scores, key=float)
+            # Check if one is good enough
+            bestIndividu = self.population[0]
 
-            if self.population[0].scores >= 4:
-                return self.population[0].get_decoded_chromosome(self.population[0].chromosome)
+            if bestIndividu.kill >= 4:
+                print(f"********** The best has been found **********")
+                print(f"Crossover rate : {self.crossover_rate}")
+                print(f"Mutation rate : {self.mutation_rate}")
+                print('Best attributes : ', bestIndividu.attributes)
+                print('Best fitness : ', bestIndividu.fitness)
+                print('Best kill : ', bestIndividu.kill)
+                return bestIndividu.attributes
+            elif self.generation % 50 == 0 :
+                print(f"********** Generation {self.generation} **********")
+                print(f"Crossover rate : {self.crossover_rate}")
+                print(f"Mutation rate : {self.mutation_rate}")
+                print(f"Best attributes : {bestIndividu.attributes}")
+                print(f"Best fitness : {bestIndividu.fitness}")
+                print(f"Best kill : {bestIndividu.kill}")
 
-            new_generation = []
+            if self.generation >= GENERATION_RESTART:
+                self.population = [self.generate_individual() for _ in range(POPULATION_SIZE)]
+                self.generation = 1
+                self.restart += 1
 
-            boomer_index = int((10 * self.population_size) / 100)
-            new_generation.extend(self.population[:boomer_index])
+                if self.restart % 2 == 0:
+                    self.mutation_rate += 0.01
+                else:
+                    self.crossover_rate += 0.01
 
-            xoomer_index = int((90 * self.population_size) / 100)
-            for _ in range(xoomer_index):
-                parent1 = random.choice(self.population[:50])
-                parent2 = random.choice(self.population[:50])
-                child = parent1.mate(parent2)
-                new_generation.append(child)
+            else:
 
-            self.population = new_generation
-            self.generations += 1
-            scores = []
+                # Get the best from the population
+                new_generation = []
+                new_generation.extend(self.population[:int(ELITE_RATIO * POPULATION_SIZE) - 1])
 
+                while len(new_generation) < POPULATION_SIZE:
+                    [parent1, parent2] = random.choices(self.population, k=2)
+
+                    child1, child2 = self.crossover(parent1, parent2)
+
+                    self.mutate(child1)
+                    self.mutate(child2)
+
+                    new_generation.extend([child1, child2])
+
+                self.population = new_generation
+                self.generation += 1
+
+        # If no individual reaches the threshold, return the best found
+        return self.population[0]

@@ -9,13 +9,15 @@ if __name__ == '__main__':
     # Niveau 0 - sans obstacle - 'assets/Mazes/mazeMedium_0'
     # Niveau 1 - avec obstacles - 'assets/Mazes/mazeMedium_1'
     # Niveau 2 - avec obstacles, portes et un ennemi - 'assets/Mazes/mazeMedium_2'
-    # Niveau 2 - avec obstacles, portes et plusieurs ennemis - 'assets/Mazes/mazeMedium_2'
+    # Niveau 2 - avec obstacles, portes et plusieurs ennemis - 'assets/Mazes/mazeMedium_3'
 
-    #maze_file = 'assets/Mazes/mazeMedium_0'
-    maze_file = 'assets/Mazes/MazeLarge_3'
+    #theAPP = App('assets/Mazes/mazeMedium_3')
+    #theAPP = App('assets/Mazes/mazeLarge_0')
+    #theAPP = App('assets/Mazes/mazeLarge_1')
+    theAPP = App('assets/Mazes/MazeLarge_2')
+    #theAPP = App('assets/Mazes/MazeLarge_3')
+    #theAPP = App('assets/Mazes/mazeTest_0')
+    theAPP.on_execute()
 
-    theAPP = App(maze_file)
-    player_zero = AIEngine(theAPP.player, "Lightning McQueen", maze_file, theAPP.maze)
-    theAPP.on_execute(player_zero)
 
 

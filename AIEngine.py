@@ -6,120 +6,294 @@ from Player import Player
 from MazeSolver import MazeSolver
 import pygame
 from Maze import Maze
-import ObstacleDodger
+from ObstacleDodger import ObstacleDodger
 from Constants import *
 from swiplserver import PrologMQI
-from MonsterKiller import KillMonster
-
-MOVE_PLAYER_RIGHT = pygame.USEREVENT + 1
-MOVE_PLAYER_LEFT = pygame.USEREVENT + 2
-MOVE_PLAYER_UP = pygame.USEREVENT + 3
-MOVE_PLAYER_DOWN = pygame.USEREVENT + 4
-
+from MonsterKiller import MonsterKiller
 
 # This the AI player
 class AIEngine:
 
-    def __init__(self, player: Player, name: str, maze_file, maze: Maze):
-        self.name = name
+    def __init__(self, player: Player, maze: Maze):
         self.player = player
         self.maze = maze
-        self.graphic_maze = MazeSolver(maze_file)
-        self.dodger = ObstacleDodger.Dodger()
-        self.tuile_size = (self.maze.tile_size_x, self.maze.tile_size_y)
-        self.monster_killer = KillMonster(60, 0.01, 40, 0.8, 0.1, maze)
-        self.kill = 0;
+        self.mazeSolver = MazeSolver(self.maze.maze)
+        self.path = None
+        self.nextPathIndex = 1
+        self.instruction = ''
 
-    def index_2d(self, list, item):
-        for i, x in enumerate(list):
-            if item in x:
-                return i, x.index(item)
+        self.obstacle_dodger = ObstacleDodger(self.maze)
+        self.monster_killer = MonsterKiller()
+        self.monster = None
 
-    def findMazeEnd(self):
-        # Get the coordinates of the maze end from the maze file
-        maze_file = open(self.graphic_maze.maze_file, "r")
-        maze = []
-        for line in maze_file:
-            line = line.replace("\n", "")
-            line = line.split(",")
-            maze.append(line)
-        return self.index_2d(maze, 'E')
+        self.topWall = None
+        self.rightWall = None
+        self.bottomWall = None
+        self.leftWall = None
+        self.obstacle = None
 
-    # The coordinates in the graph are 1 to 14 for y and 1 to 23 for x
-    def formatCoordinates(self, coordinates):
-        return coordinates[0] - 1, coordinates[1] - 1
+        self.lastPosition = self.player.get_rect().center
+        self.stuckCounter = 0
 
-    def computeShortestPath(self):
-        self.player_position_start = (0, 1)
-        self.player_position_end = (15, 22)
-        self.shortest_graph_list = self.graphic_maze.getShortestPath(self.player_position_start,
-                                                                     self.player_position_end)
+    def getInstruction(self):
+        # Make sure the path is computed
+        if not self.path:
+            self.path = self.mazeSolver.computePath()
 
-    # This method loop through the shortest path and move the player accordingly
-    def movePlayer(self):
-        coordinate = self.shortest_graph_list[0]
+        if len(self.path) == 0:
+            print('There is no path')
+            return NO_PATH
 
-        player_x = self.player.get_position()[1] // 60
-        player_y = self.player.get_position()[0] // 54
+        # get player rectangle
+        player_rect = self.player.get_rect()
 
-        self.direction_to_move = 0
+        if player_rect.center == self.lastPosition:
+            self.stuckCounter += 1
+            if self.stuckCounter >= 5:
+                print('Player is stuck')
+        else:
+            self.stuckCounter = 0
 
-        # Move the player to the coordinate
-        if coordinate[0] < player_x:
-            self.direction_to_move = UP
-        elif coordinate[0] > player_x:
-            self.direction_to_move = DOWN
-        elif coordinate[1] < player_y:
-            self.direction_to_move = LEFT
-        elif coordinate[1] > player_y:
-            self.direction_to_move = RIGHT
+        # get current position
+        current_pos = [player_rect.centery, player_rect.centerx]
+        current_map_tile = [current_pos[0]//self.maze.tile_size_y, current_pos[1]//self.maze.tile_size_x]
 
-        self.direction_to_move = self.dodgeObstacles()
-        # move the player in the direction computed by the fuzzy logic
-        if self.direction_to_move == LEFT:
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_LEFT))
-        elif self.direction_to_move == RIGHT:
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
-        elif self.direction_to_move == UP:
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_UP))
-        elif self.direction_to_move == DOWN:
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
-        elif self.direction_to_move == HALF_LEFT:
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_LEFT))
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
-        elif self.direction_to_move == HALF_RIGHT:
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_RIGHT))
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
+        # get next tile
+        next_map_tile = self.path[self.nextPathIndex]
+        next_pos = [(next_map_tile[0] + 0.5)*self.maze.tile_size_y, (next_map_tile[1] + 0.5)*self.maze.tile_size_x]
 
-        if len(self.maze.make_perception_list(self.player, "")[3]):
-            monster = self.maze.make_perception_list(self.player, "")[3][0]
-            solution = None
-            while solution == None and self.kill == 0:
-                self.monster_killer.setMonster(monster)
-                solution = self.monster_killer.genetic_algorithm()
-                self.player.set_attributes(solution)
-                self.kill = 1
+        next_tile_top = next_map_tile[0] * self.maze.tile_size_y
+        next_tile_right = (next_map_tile[1] + 1) * self.maze.tile_size_x
+        next_tile_bottom = (next_map_tile[0] + 1) * self.maze.tile_size_y
+        next_tile_left = next_map_tile[1] * self.maze.tile_size_x
 
+        # Check if player is fully on the tile
+        if  next_tile_top <= player_rect.top and \
+            next_tile_right >= player_rect.right and \
+            next_tile_bottom >= player_rect.bottom and \
+            next_tile_left <= player_rect.left:
+            #print('Next position -----------------------------------------------------------')
+            self.nextPathIndex += 1
+            next_map_pos = self.path[self.nextPathIndex]
+            next_pos = [(next_map_tile[0] + 0.5) * self.maze.tile_size_y,
+                        (next_map_tile[1] + 0.5) * self.maze.tile_size_x]
 
-        if len(self.maze.make_perception_list(self.player, "")[4]):
+        diff_y = abs(next_pos[0] - current_pos[0])
+        diff_x = abs(next_pos[1] - current_pos[1])
+
+        next_instruction = ''
+
+        if next_pos[0] > current_pos[0] and diff_y >= diff_x:
+            next_instruction = DOWN
+        elif next_pos[0] < current_pos[0] and diff_y >= diff_x:
+            next_instruction = UP
+        elif next_pos[1] > current_pos[1]:
+            next_instruction = RIGHT
+        elif next_pos[1] < current_pos[1]:
+            next_instruction = LEFT
+
+        [walls, obstacles, items, monsters, doors] = self.maze.make_perception_list(self.player, "")
+
+        # Check for obstacle
+        next_instruction = self.checkForObstacles(obstacles, walls, player_rect, next_instruction)
+
+        # Check for monster
+        self.checkForMonsters(monsters)
+
+        # Check for door
+        self.checkForDoors(doors)
+
+        # Send the instruction
+        self.instruction = next_instruction
+        self.lastPosition = player_rect.center
+        return self.instruction
+
+    def checkForWalls(self, walls, player_rect, next_instruction):
+        self.topWall = None
+        self.rightWall = None
+        self.bottomWall = None
+        self.leftWall = None
+
+        if len(walls):
+            for wall in walls:
+                # For the right wall
+                if wall.left > player_rect.right:
+                    if wall.top <= player_rect.top and wall.bottom >= player_rect.top and next_instruction != UP:
+                        self.setRightWall(wall.left)
+                    elif wall.top <= player_rect.bottom and wall.bottom >= player_rect.bottom and next_instruction != DOWN:
+                        self.setRightWall(wall.left)
+
+                # For the left wall
+                elif wall.right < player_rect.left:
+                    if wall.top < player_rect.top and wall.bottom > player_rect.top and next_instruction != UP:
+                        self.setLeftWall(wall.right)
+                    elif wall.top < player_rect.bottom and wall.bottom > player_rect.bottom and next_instruction != DOWN:
+                        self.setLeftWall(wall.right)
+
+                # For the top wall
+                elif wall.bottom < player_rect.top:
+                    if wall.left < player_rect.right and wall.right > player_rect.right and next_instruction != RIGHT:
+                        self.setTopWall(wall.bottom)
+                    elif wall.left < player_rect.left and wall.right > player_rect.left and next_instruction != LEFT:
+                        self.setTopWall(wall.bottom)
+
+                # For the bottom wall
+                elif wall.top > player_rect.bottom:
+                    if wall.left < player_rect.right and wall.right > player_rect.right and next_instruction != RIGHT:
+                        self.setBottomWall(wall.top)
+                    elif wall.left < player_rect.left and wall.right > player_rect.left and next_instruction != LEFT:
+                        self.setBottomWall(wall.top)
+
+            # Check for unset walls and find on map
+            if self.topWall is None:
+                x = int(player_rect.centerx // self.maze.tile_size_x)
+                y = int(player_rect.centery // self.maze.tile_size_y)
+                while self.maze.maze[y][x] not in DELIMITER:
+                    y -= 1
+
+                self.setTopWall(y * self.maze.tile_size_y + self.maze.tile_size_y)
+
+            if self.rightWall is None:
+                x = int(player_rect.centerx // self.maze.tile_size_x)
+                y = int(player_rect.centery // self.maze.tile_size_y)
+                while self.maze.maze[y][x] not in DELIMITER:
+                    x += 1
+
+                self.setRightWall(x * self.maze.tile_size_x)
+
+            if self.bottomWall is None:
+                x = int(player_rect.centerx // self.maze.tile_size_x)
+                y = int(player_rect.centery // self.maze.tile_size_y)
+                while self.maze.maze[y][x] not in DELIMITER:
+                    y += 1
+
+                self.setBottomWall(y * self.maze.tile_size_y)
+
+            if self.leftWall is None:
+                x = int(player_rect.centerx // self.maze.tile_size_x)
+                y = int(player_rect.centery // self.maze.tile_size_y)
+                while self.maze.maze[y][x] not in DELIMITER:
+                    x -= 1
+                self.setLeftWall(x * self.maze.tile_size_x + self.maze.tile_size_x)
+
+    def checkForObstacles(self, obstacles, walls, player_rect, next_instruction):
+        # Check if already avoiding obstacle and if it is still blocking
+        if self.obstacle is not None:
+            if not self.isObstacleBlockingPlayer(self.obstacle, player_rect, next_instruction):
+                self.obstacle = None
+
+        # Find the closest obstacle that is blocking
+        if len(obstacles) and self.obstacle is None:
+            closest_obstacle = None
+            closest_distance = 0
+            for obstacle in obstacles:
+                if self.isObstacleBlockingPlayer(obstacle, player_rect, next_instruction):
+                    distance = (player_rect.centerx - obstacle.centerx) ** 2 + (player_rect.centery - obstacle.centery) ** 2
+                    if closest_obstacle is None or distance < closest_distance:
+                        closest_obstacle = obstacle
+                        closest_distance = distance
+            #print(f"Distance {closest_distance}")
+            self.obstacle = closest_obstacle
+
+        # Avoid the obstacle if any
+        if self.obstacle is not None:
+            #self.checkForWalls(walls, player_rect, next_instruction)
+            print(f"Avoiding {self.obstacle}")
+            #new_instruction = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction, self.topWall,self.rightWall, self.bottomWall, self.leftWall)
+            new_instruction = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction)
+
+            if new_instruction == NO_PATH:
+                print("Player can't pass. Recomputing the path")
+                if self.nextPathIndex + 1 > len(self.path)-1:
+                    print('Cant access tue exit')
+                else:
+                    oy = self.path[self.nextPathIndex + 1][0]
+                    ox = self.path[self.nextPathIndex + 1][1]
+                    print(f"Changing {self.path[self.nextPathIndex]} to a wall")
+
+                    self.maze.maze[oy][ox] = WALL
+                    py = int(player_rect.centery // self.maze.tile_size_y)
+                    px = int(player_rect.centerx // self.maze.tile_size_x)
+                    self.mazeSolver.setStart(py, px)
+
+                    self.path = self.mazeSolver.computePath()
+                    print(f" new Path {self.path}")
+                    self.nextPathIndex = 1
+
+            # Check if there is an obstacle blocking the new instruction
+            for obstacle in obstacles:
+                if self.isObstacleBlockingPlayer(obstacle, player_rect, new_instruction):
+                    return next_instruction
+
+            return new_instruction
+
+        # Return the current instruction since there is nothing to avoid
+        return next_instruction
+
+    def checkForMonsters(self, monsters):
+        if len(monsters) and self.monster == None:
+            # print("Monster detected")
+            self.monster_killer = MonsterKiller()
+            self.monster = self.maze.make_perception_list(self.player, "")[3][0]
+            solution = self.monster_killer.genetic_algorithm(self.monster)
+            self.player.set_attributes(solution)
+        elif self.monster not in monsters:
+            self.monster = None
+
+    def checkForDoors(self, doors):
+        if len(doors):
+            # print("Door detected")
             self.door_state = self.maze.look_at_door(self.player, "")
-            solution = ""
-            while solution == "":
-                solution = self.resolvePuzzle()
+            solution = self.resolvePuzzle()
             self.maze.unlock_door(solution)
 
+    def isObstacleBlockingPlayer(self, obstacle, player_rect, next_instruction):
+        if next_instruction == UP and obstacle.centery < player_rect.centery:
+            if player_rect.left < obstacle.right and player_rect.right > obstacle.left:
+                return True
+        elif next_instruction == DOWN and obstacle.centery > player_rect.centery:
+            if player_rect.left < obstacle.right and player_rect.right > obstacle.left:
+                return True
+        elif next_instruction == RIGHT and obstacle.centerx > player_rect.centerx:
+            if player_rect.bottom > obstacle.top and player_rect.top < obstacle.bottom:
+                return True
+        elif next_instruction == LEFT and obstacle.centerx < player_rect.centerx:
+            if player_rect.bottom > obstacle.top and player_rect.top < obstacle.bottom:
+                return True
 
-        # if the coordinate is reached, remove it from the list
-        if coordinate == (player_x, player_y) and len(self.shortest_graph_list) > 1:
-            self.shortest_graph_list.pop(0)
-        elif len(self.shortest_graph_list) == 1:
-            pygame.event.post(pygame.event.Event(MOVE_PLAYER_DOWN))
+        return False
 
-    # This method uses fuzzy logic to dodge obstacles
-    def dodgeObstacles(self):
-        vision = self.maze.make_perception_list(self.player, "")
-        self.dodger.maze = self.maze
-        return self.dodger.dodge(vision, self.player, self.direction_to_move)
+    def setTopWall(self, topWall):
+        if self.topWall is not None:
+            if topWall > self.topWall:
+                # Le mur est plus proche
+                self.topWall = int(topWall)
+        else:
+            self.topWall = int(topWall)
+
+    def setBottomWall(self, bottomWall):
+        if self.bottomWall is not None:
+            if bottomWall < self.bottomWall:
+                # Le mur est plus proche
+                self.bottomWall = int(bottomWall)
+        else:
+            self.bottomWall = int(bottomWall)
+
+    def setRightWall(self, rightWall):
+        if self.rightWall is not None:
+            if rightWall < self.rightWall:
+                # Le mur est plus proche
+                self.rightWall = int(rightWall)
+        else:
+            self.rightWall = int(rightWall)
+
+    def setLeftWall(self, leftWall):
+        if self.leftWall is not None:
+            if leftWall > self.leftWall:
+                # Le mur est plus proche
+                self.leftWall = int(leftWall)
+        else:
+            self.leftWall = int(leftWall)
 
     # If a coin or a treasure is near the player, the method will change the player direction to get it
     def getCoinTreasure(self):
@@ -136,17 +310,16 @@ class AIEngine:
 
     def resolvePuzzle(self):
         try:
-            with PrologMQI() as mqi:
-                with mqi.create_thread() as prolog_thread:
-                    prolog_thread.query(f"consult('./prolog/enigme.pl')")
-                    crystals = self.door_state[0]
-                    crystals.pop(0)
-                    lock_color = self.door_state[0][0]
-                    query_string = f"remove_crystal({crystals}, {lock_color}, CrystalToRemove)"
-                    solutions = prolog_thread.query(query_string)
-                    if solutions:
-                        return solutions[0]['CrystalToRemove']
-                    else:
-                        return "No solution found"
+            while True:
+                with PrologMQI() as mqi:
+                    with mqi.create_thread() as prolog_thread:
+                        prolog_thread.query(f"consult('./prolog/enigme.pl')")
+                        crystals = self.door_state[0]
+                        crystals.pop(0)
+                        lock_color = self.door_state[0][0]
+                        query_string = f"remove_crystal({crystals}, {lock_color}, CrystalToRemove)"
+                        solutions = prolog_thread.query(query_string)
+                        if solutions:
+                            return solutions[0]['CrystalToRemove']
         except Exception as e:
             return f"Error executing Prolog query: {e}"

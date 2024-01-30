@@ -23,6 +23,7 @@ class App:
         self.timer = 0.0
         self.player = Player()
         self.maze = Maze(mazefile)
+        self.AI = AIEngine(self.player, self.maze)
 
     def on_init(self):
         pygame.init()
@@ -79,16 +80,16 @@ class App:
 
     # FONCTION À Ajuster selon votre format d'instruction
     def on_AI_input(self, instruction):
-        if instruction == MOVE_PLAYER_RIGHT:
+        if instruction == RIGHT:
             self.move_player_right()
 
-        if instruction == MOVE_PLAYER_LEFT:
+        if instruction == LEFT:
             self.move_player_left()
 
-        if instruction == MOVE_PLAYER_UP:
+        if instruction == UP:
             self.move_player_up()
 
-        if instruction == MOVE_PLAYER_DOWN:
+        if instruction == DOWN:
             self.move_player_down()
 
     def on_collision(self):
@@ -190,9 +191,8 @@ class App:
     def on_cleanup(self):
         pygame.quit()
 
-    def on_execute(self, player: AIEngine):
+    def on_execute(self):
         self.on_init()
-        player.computeShortestPath()
 
         while self._running:
             self._clock.tick(GAME_CLOCK)
@@ -201,11 +201,19 @@ class App:
                     self._running = False
                 if event.type == pygame.USEREVENT:
                     self.timer += 0.01
-                self.on_AI_input(event.type)
             pygame.event.pump()
+
             keys = pygame.key.get_pressed()
-            #print(self.player.get_position())
             self.on_keyboard_input(keys)
+
+            instruction = self.AI.getInstruction()
+
+            if instruction is NO_PATH:
+                self._dead = True
+                continue
+            else:
+                #print("Instruction = ", instruction)
+                self.on_AI_input(instruction)
 
             if self.on_coin_collision():
                 self.score += 1
@@ -222,7 +230,6 @@ class App:
             if self.on_exit():
                 self._running = False
                 self._win = True
-            player.movePlayer()
             self.on_render()
 
         while self._win:
