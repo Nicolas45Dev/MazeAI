@@ -27,60 +27,7 @@ class ObstacleDodger:
         position_player = ctrl.Antecedent(np.arange(-10, 11, 1), 'position_player')
         distance = ctrl.Antecedent(np.arange(0, 11, 1), 'distance')
 
-        direction = ctrl.Consequent(np.arange(-1, 2, 1), 'direction')
-
-        # define rules
-        position_obstacle['left'] = fuzz.trimf(position_obstacle.universe, [-10, -10, 2])
-        position_obstacle['center'] = fuzz.trimf(position_obstacle.universe, [0, 0, 0])
-        position_obstacle['right'] = fuzz.trimf(position_obstacle.universe, [-2, 10, 10])
-
-        position_player['left'] = fuzz.trimf(position_player.universe, [-10, -10, 2])
-        position_player['center'] = fuzz.trimf(position_player.universe, [0, 0, 0])
-        position_player['right'] = fuzz.trimf(position_player.universe, [-2, 10, 10])
-
-        distance['near'] = fuzz.trimf(distance.universe, [0, 0, 5])
-        distance['medium'] = fuzz.trimf(distance.universe, [0, 5, 10])
-        distance['far'] = fuzz.trimf(distance.universe, [5, 10, 10])
-
-        direction['left'] = fuzz.trimf(direction.universe, [-1, -1, 0.5])
-        direction['straight'] = fuzz.trimf(direction.universe, [-0.5, 0, 0.5])
-        direction['right'] = fuzz.trimf(direction.universe, [-0.5, 1, 1])
-
-        #position_obstacle.view()
-        #position_player.view()
-        #distance.view()
-        #direction.view()
-
-        rules = []
-        rules.append(ctrl.Rule(distance['far'], direction['straight']))
-        rules.append(ctrl.Rule(distance['medium'], direction['straight']))
-
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left'] & position_player['left'], direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left'] & position_player['center'], direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left'] & position_player['right'], direction['right']))
-
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['center'] & position_player['left'], direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['center'] & position_player['center'], direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['center'] & position_player['right'], direction['right']))
-
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right'] & position_player['left'], direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right'] & position_player['center'], direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right'] & position_player['right'], direction['left']))
-
-        for rule in rules:
-            rule.and_func = np.fmin
-            rule.or_func = np.fmax
-
-        self.dodger_ctrl = ctrl.ControlSystem(rules)
-        self.dodger = ctrl.ControlSystemSimulation(self.dodger_ctrl)
-
-    def new_createFuzzyController(self):
-
-        position_obstacle = ctrl.Antecedent(np.arange(-10, 11, 1), 'position_obstacle')
-        position_player = ctrl.Antecedent(np.arange(-10, 11, 1), 'position_player')
-        distance = ctrl.Antecedent(np.arange(0, 11, 1), 'distance')
-
-        direction = ctrl.Consequent(np.arange(-1, 2, 1), 'direction')
+        direction = ctrl.Consequent(np.arange(-3, 4, 1), 'direction')
 
         # define rules
         position_obstacle['left'] = fuzz.trimf(position_obstacle.universe, [-10, -10, -4])
@@ -97,9 +44,9 @@ class ObstacleDodger:
         distance['medium'] = fuzz.trimf(distance.universe, [0, 5, 10])
         distance['far'] = fuzz.trimf(distance.universe, [5, 10, 10])
 
-        direction['left'] = fuzz.trimf(direction.universe, [-1, -1, 0.5])
-        direction['straight'] = fuzz.trimf(direction.universe, [-0.5, 0, 0.5])
-        direction['right'] = fuzz.trimf(direction.universe, [-0.5, 1, 1])
+        direction['left'] = fuzz.trimf(direction.universe, [-3, -3, 0])
+        direction['straight'] = fuzz.trimf(direction.universe, [-1, 0, 1])
+        direction['right'] = fuzz.trimf(direction.universe, [0, 3, 3])
 
         #position_obstacle.view()
         #position_player.view()
@@ -107,53 +54,21 @@ class ObstacleDodger:
         #direction.view()
 
         rules = []
-        rules.append(ctrl.Rule(distance['far'], direction['straight']))
-        #rules.append(ctrl.Rule(distance['medium'], direction['straight']))
+        rules.append(ctrl.Rule(distance['far'] &
+                               (position_obstacle['right'] | position_obstacle['left-center'] | position_obstacle['right-center'] | position_obstacle['right']) &
+                               (position_player['right'] | position_player['left-center'] | position_player['right-center'] | position_player['right'])
+                               , direction['straight']))
 
-        #rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left'], direction['straight']))
-        #rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left-center'], direction['right']))
-        #rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right-center'], direction['left']))
-        #rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right'], direction['straight']))
+        rules.append(ctrl.Rule((distance['near'] | distance['medium']) &
+                               (position_obstacle['left'] | position_obstacle['left-center']) &
+                               (position_player['right'] | position_player['left-center'] | position_player['right-center'] | position_player['right'])
+                               , direction['right']))
 
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left'] & position_player['left'], direction['right']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left'] & position_player['left-center'], direction['right']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left'] & position_player['right-center'], direction['right']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left'] & position_player['right'], direction['right']))
+        rules.append(ctrl.Rule((distance['near'] | distance['medium']) &
+                               (position_obstacle['right-center'] | position_obstacle['right']) &
+                               (position_player['right'] | position_player['left-center'] | position_player['right-center'] | position_player['right'])
+                               , direction['left']))
 
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left-center'] & position_player['left'], direction['right']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left-center'] & position_player['left-center'], direction['right']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left-center'] & position_player['right-center'], direction['right']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['left-center'] & position_player['right'], direction['right']))
-
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right-center'] & position_player['left'], direction['left']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right-center'] & position_player['left-center'], direction['left']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right-center'] & position_player['right-center'], direction['left']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right-center'] & position_player['right'], direction['left']))
-
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right'] & position_player['left'], direction['left']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right'] & position_player['left-center'], direction['left']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right'] & position_player['right-center'], direction['left']))
-        rules.append(ctrl.Rule(distance['medium'] & position_obstacle['right'] & position_player['right'], direction['left']))
-
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left'] & position_player['left'], direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left'] & position_player['left-center'], direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left'] & position_player['right-center'], direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left'] & position_player['right'],direction['right']))
-
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left-center'] & position_player['left'], direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left-center'] & position_player['left-center'],direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left-center'] & position_player['right-center'],direction['right']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['left-center'] & position_player['right'],direction['right']))
-
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right-center'] & position_player['left'],direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right-center'] & position_player['left-center'],direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right-center'] & position_player['right-center'],direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right-center'] & position_player['right'],direction['left']))
-
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right'] & position_player['left'], direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right'] & position_player['left-center'], direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right'] & position_player['right-center'], direction['left']))
-        rules.append(ctrl.Rule(distance['near'] & position_obstacle['right'] & position_player['right'], direction['left']))
 
         for rule in rules:
             rule.and_func = np.fmin
@@ -164,14 +79,14 @@ class ObstacleDodger:
 
     def dodge(self, obstacle: pygame.Rect, player: pygame.Rect, direction_to_move):
         if self.dodger is None:
-            self.new_createFuzzyController()
+            self.createFuzzyController()
 
         #print(obstacle.right)
 
         # For the positions
         if direction_to_move == DOWN or direction_to_move == UP:
-            canPassLeft = obstacle.left % self.maze.tile_size_x > player.width
-            canPassRight = self.maze.tile_size_x - (obstacle.right % self.maze.tile_size_x) > player.width
+            canPassLeft = obstacle.left % self.maze.tile_size_x >= player.width
+            canPassRight = self.maze.tile_size_x - (obstacle.right % self.maze.tile_size_x) >= player.width
 
             #print(f"Can pass right({canPassRight}) Can pass left({canPassLeft}) Obstacle({obstacle}) Player({player})")
             if canPassLeft or canPassRight:
@@ -181,10 +96,9 @@ class ObstacleDodger:
             else:
                 print("Player can't pass on the left or the right inside the tile")
                 return NO_PATH
-
         else:
-            canPassOver = obstacle.top % self.maze.tile_size_y > player.height
-            canPassUnder = self.maze.tile_size_y - (obstacle.bottom % self.maze.tile_size_y) > player.height
+            canPassOver = obstacle.top % self.maze.tile_size_y >= player.height
+            canPassUnder = self.maze.tile_size_y - (obstacle.bottom % self.maze.tile_size_y) >= player.height
 
             if canPassOver or canPassUnder:
                 half = self.maze.tile_size_y // 2
@@ -193,7 +107,6 @@ class ObstacleDodger:
             else:
                 print("Player can't pass over or under the obstacle inside the tile")
                 return NO_PATH
-
 
         # For the distance
         if direction_to_move == UP:
@@ -210,12 +123,12 @@ class ObstacleDodger:
         #print(f"Direction({direction})")
 
         # Check for direction (-1, 0, 1)
-        if direction <= -0.1:
+        if direction <= -0.25:
             if direction_to_move == UP or direction_to_move == DOWN:
                 return LEFT
             elif direction_to_move == RIGHT or direction_to_move == LEFT:
                 return UP
-        elif direction >= 0.1:
+        elif direction >= 0.25:
             if direction_to_move == UP or direction_to_move == DOWN:
                 return RIGHT
             elif direction_to_move == RIGHT or direction_to_move == LEFT:

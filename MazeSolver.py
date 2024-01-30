@@ -91,7 +91,7 @@ class MazeSolver():
                     path.append(current.position)
                     current = current.parent
 
-                self.plot_explored_nodes(closed_list)
+                self.plot_explored_nodes(closed_list, path[::-1])
                 return path[::-1] # Return path in reverse
 
             closed_list.add(current_node.position)
@@ -150,113 +150,6 @@ class MazeSolver():
 
             counter += 1
 
-    def old_computePath(self):
-        """Returns a list of tuples as a path from the given start to the given end in the given maze"""
-
-        # Create start and end node
-        start_node = Node(None, self.start)
-        start_node.g = start_node.h = start_node.f = 0
-        exit_node = Node(None, self.exit)
-        exit_node.g = exit_node.h = exit_node.f = 0
-
-        # Initialize both open and closed list
-        open_list = []
-        closed_list = []
-
-        counter = 0
-
-        # Add the start node
-        open_list.append(start_node)
-
-        # Loop until you find the end
-        while len(open_list) > 0:
-            print("-----------------------------------------------------")
-            # Get the current node
-            current_node = open_list[0]
-            current_index = 0
-            for index, item in enumerate(open_list):
-                #print(item.position)
-                if item.f < current_node.f:
-                    current_node = item
-                    current_index = index
-
-            # Pop current off open list, add to closed list
-            open_list.pop(current_index)
-            closed_list.append(current_node)
-
-            if counter % 50 == 0:
-                self.plot_explored_nodes(closed_list)
-
-            # Found the goal
-            if current_node == exit_node:
-                path = []
-                current = current_node
-                while current is not None:
-                    path.append(current.position)
-                    current = current.parent
-                return path[::-1] # Return path in reverse
-
-            # Generate children
-            children = []
-            #for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]:  # Adjacent squares (8 directions)
-            for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]:  # Adjacent squares (4 directions)
-
-                # Get node position
-                node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
-
-                print(current_node.position," -> ",node_position)
-
-                # Make sure within row range
-                if node_position[0] < 0 or node_position[0] > (len(self.maze) - 1):
-                    continue
-
-                # Make sure within column range
-                if node_position[1] < 0 or node_position[1] > (len(self.maze[0]) - 1):
-                    continue
-
-                # Make sure walkable terrain
-                if self.maze[node_position[0]][node_position[1]] in WALL:
-                    continue
-
-                # Make sure node isn`t a parent
-                if current_node.passedBy(node_position):
-                    continue
-
-                #if current_node
-
-                # Create new node
-                new_node = Node(current_node, node_position)
-
-                # Append
-                children.append(new_node)
-
-            # Loop through children
-            for child in children:
-
-                # Child is on the closed list
-                for closed_child in closed_list:
-                    if child == closed_child:
-                        print(f"({child.position}) alredy in closed_list")
-                        continue
-
-                # Create the f, g, and h values
-                child.g = current_node.g + 1
-                child.h = ((child.position[0] - exit_node.position[0]) ** 2) + (
-                            (child.position[1] - exit_node.position[1]) ** 2)
-                child.f = child.g + child.h
-
-                # Child is already in the open list
-                for index, open_node in enumerate(open_list):
-                    if child == open_node:
-                        if child.g > open_node.g:
-                            continue
-                        else:
-                            open_list.pop(index)
-
-                # Add the child to the open list
-                open_list.append(child)
-            counter += 1
-
     def plot_explored_nodes(self, nodes, path=None):
         fig, ax = plt.subplots()
 
@@ -270,8 +163,8 @@ class MazeSolver():
 
         # Plot the path if it exists
         if path:
-            path_x, path_y = zip(path)
-            ax.plot(path_x, path_y, color='yellow', linewidth=2)
+            path_y, path_x = zip(*path)
+            ax.plot(path_x, path_y, color='red', linewidth=2)
 
         # Plot walls
         if hasattr(self.maze, 'wallList'):
@@ -292,4 +185,5 @@ class MazeSolver():
         plt.ylabel('Y Coordinate')
         plt.title('Explored Nodes and Path in A* Algorithm')
         plt.gca().invert_yaxis()
+        ax.legend(['Explored nodes', 'Shortest path'])
         plt.show()

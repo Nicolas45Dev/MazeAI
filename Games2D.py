@@ -207,7 +207,6 @@ class App:
             self.on_keyboard_input(keys)
 
             instruction = self.AI.getInstruction()
-
             if instruction is NO_PATH:
                 self._dead = True
                 continue
