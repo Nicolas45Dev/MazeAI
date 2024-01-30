@@ -207,7 +207,7 @@ class App:
             self.on_keyboard_input(keys)
 
             instruction = self.AI.getInstruction()
-            #print("Instruction = ", instruction)
+            print("Instruction = ", instruction)
             self.on_AI_input(instruction)
 
             if self.on_coin_collision():

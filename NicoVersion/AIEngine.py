@@ -30,6 +30,7 @@ class AIEngine:
         self.rightWall = None
         self.bottomWall = None
         self.leftWall = None
+        self.obstacle = None
 
     def getInstruction(self):
         # Make sure the path is computed
@@ -161,25 +162,49 @@ class AIEngine:
                 self.setLeftWall(x * self.maze.tile_size_x + self.maze.tile_size_x)
 
     def checkForObstacles(self, obstacles, walls, player_rect, next_instruction):
-        if len(obstacles):
+        # Check if already avoiding obstacle and if it is still blocking
+        if self.obstacle is not None:
+            if not self.isObstacleBlockingPlayer(self.obstacle, player_rect, next_instruction):
+                self.obstacle = None
+
+        # Find the closest obstacle that is blocking
+        if len(obstacles) and self.obstacle is None:
             closest_obstacle = None
-            distance = 0
+            closest_distance = 0
             for obstacle in obstacles:
-                if next_instruction == UP or next_instruction == DOWN:
-                    if player_rect.left < obstacle.right and player_rect.right > obstacle.left:
-                        temp = (player_rect.centerx - obstacle.centerx) ** 2 + (player_rect.centery - obstacle.centery) ** 2
-                        if closest_obstacle is None or temp < distance:
-                            closest_obstacle = obstacle
-                            distance = temp
-                elif next_instruction == RIGHT or next_instruction == LEFT:
-                    if player_rect.bottom > obstacle.top and player_rect.top < obstacle.bottom:
-                        temp = (player_rect.centerx - obstacle.centerx) ** 2 + (player_rect.centery - obstacle.centery) ** 2
-                        if closest_obstacle is None or temp < distance:
-                            closest_obstacle = obstacle
-                            distance = temp
-            if closest_obstacle is not None:
-                self.checkForWalls(walls, player_rect, next_instruction)
-                return self.obstacle_dodger.dodge(closest_obstacle, player_rect, next_instruction, self.topWall, self.rightWall, self.bottomWall, self.leftWall)
+                if self.isObstacleBlockingPlayer(obstacle, player_rect, next_instruction):
+                    distance = 0
+                    #if next_instruction == UP:
+                    #    distance = player_rect.centery - obstacle.centery
+                    #elif next_instruction == RIGHT:
+                    #    distance = obstacle.centerx - player_rect.centerx
+                    #elif next_instruction == DOWN:
+                    #    distance = obstacle.centery - player_rect.centery
+                    #elif next_instruction == LEFT:
+                    #    distance = player_rect.centerx - obstacle.centerx
+
+                    distance = (player_rect.centerx - obstacle.centerx) ** 2 + (player_rect.centery - obstacle.centery) ** 2
+                    if closest_obstacle is None or distance < closest_distance:
+                        closest_obstacle = obstacle
+                        closest_distance = distance
+            print(f"Distance {closest_distance}")
+            self.obstacle = closest_obstacle
+
+        # Avoid the obstacle if any
+        if self.obstacle is not None:
+            self.checkForWalls(walls, player_rect, next_instruction)
+            print(f"Avoiding {self.obstacle}")
+            new_instruction = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction, self.topWall,
+                                              self.rightWall, self.bottomWall, self.leftWall)
+
+            # Check if there is an obstacle blocking the new instruction
+            for obstacle in obstacles:
+                if self.isObstacleBlockingPlayer(obstacle, player_rect, new_instruction):
+                    return next_instruction
+
+            return new_instruction
+
+        # Return the current instruction since there is nothing to avoid
         return next_instruction
 
     def checkForMonsters(self, monsters):
@@ -198,6 +223,23 @@ class AIEngine:
             self.door_state = self.maze.look_at_door(self.player, "")
             solution = self.resolvePuzzle()
             self.maze.unlock_door(solution)
+
+    def isObstacleBlockingPlayer(self, obstacle, player_rect, next_instruction):
+        if next_instruction == UP and obstacle.centery < player_rect.centery:
+            if player_rect.left < obstacle.right and player_rect.right > obstacle.left:
+                return True
+        elif next_instruction == DOWN and obstacle.centery > player_rect.centery:
+            if player_rect.left < obstacle.right and player_rect.right > obstacle.left:
+                return True
+        elif next_instruction == RIGHT and obstacle.centerx > player_rect.centerx:
+            if player_rect.bottom > obstacle.top and player_rect.top < obstacle.bottom:
+                return True
+        elif next_instruction == LEFT and obstacle.centerx < player_rect.centerx:
+            if player_rect.bottom > obstacle.top and player_rect.top < obstacle.bottom:
+                return True
+
+        return False
+
 
     def setTopWall(self, topWall):
         if self.topWall is not None:

@@ -11,7 +11,8 @@ if __name__ == '__main__':
     # Niveau 2 - avec obstacles, portes et un ennemi - 'assets/Mazes/mazeMedium_2'
     # Niveau 2 - avec obstacles, portes et plusieurs ennemis - 'assets/Mazes/mazeMedium_2'
 
-    maze_file = 'assets/Mazes/mazeMedium_0'
+    #maze_file = 'assets/Mazes/mazeMedium_0'
+    maze_file = 'assets/Mazes/MazeLarge_3'
 
     theAPP = App(maze_file)
     player_zero = AIEngine(theAPP.player, "Lightning McQueen", maze_file, theAPP.maze)

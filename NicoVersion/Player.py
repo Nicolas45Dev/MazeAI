@@ -8,7 +8,7 @@ class Player:
     y = 0
 
     def __init__(self):
-        self.speed = 4      # À modifier si votre joueur va "trop vite"
+        self.speed = 3      # À modifier si votre joueur va "trop vite"
         self.size_x = 0
         self.size_y = 0
         self.attributes = [random.randrange(-MAX_ATTRIBUTE, MAX_ATTRIBUTE) for i in range(NUM_ATTRIBUTES)]
