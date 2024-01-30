@@ -10,11 +10,13 @@ MUTATION_RATE = 0.1
 ELITE_RATIO = 0.1
 GENERATION_RESTART = 1000
 
+
 class Individu:
     def __init__(self, attributes):
         self.attributes = attributes
         self.fitness = -100
         self.kill = 0
+
 
 class MonsterKiller:
 
@@ -73,7 +75,7 @@ class MonsterKiller:
                 print('Best fitness : ', bestIndividu.fitness)
                 print('Best kill : ', bestIndividu.kill)
                 return bestIndividu.attributes
-            elif self.generation % 50 == 0 :
+            elif self.generation % 50 == 0:
                 print(f"********** Generation {self.generation} **********")
                 print(f"Crossover rate : {self.crossover_rate}")
                 print(f"Mutation rate : {self.mutation_rate}")

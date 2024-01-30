@@ -101,10 +101,10 @@ class ObstacleDodger:
         direction['straight'] = fuzz.trimf(direction.universe, [-0.5, 0, 0.5])
         direction['right'] = fuzz.trimf(direction.universe, [-0.5, 1, 1])
 
-        position_obstacle.view()
-        position_player.view()
-        distance.view()
-        direction.view()
+        #position_obstacle.view()
+        #position_player.view()
+        #distance.view()
+        #direction.view()
 
         rules = []
         rules.append(ctrl.Rule(distance['far'], direction['straight']))
