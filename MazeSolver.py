@@ -75,7 +75,7 @@ class MazeSolver():
 
         # Loop until you find the end
         while len(open_list) > 0:
-            print("-----------------------------------------------------")
+            #print("-----------------------------------------------------")
             # Get the current node
             current_node = heapq.heappop(open_list)[1]
 
@@ -104,7 +104,7 @@ class MazeSolver():
                 # Get node position
                 node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
 
-                print(current_node.position," -> ",node_position)
+                #print(current_node.position," -> ",node_position)
 
                 # Make sure within row range
                 if node_position[0] < 0 or node_position[0] > (len(self.maze) - 1):

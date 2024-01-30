@@ -4,7 +4,7 @@ import Maze
 from Player import Player
 from Constants import *
 
-POPULATION_SIZE = 300
+POPULATION_SIZE = 200
 CROSSOVER_RATE = 0.90
 MUTATION_RATE = 0.1
 ELITE_RATIO = 0.1

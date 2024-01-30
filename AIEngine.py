@@ -198,7 +198,7 @@ class AIEngine:
         # Avoid the obstacle if any
         if self.obstacle is not None:
             #self.checkForWalls(walls, player_rect, next_instruction)
-            print(f"Avoiding {self.obstacle}")
+            #print(f"Avoiding {self.obstacle}")
             #new_instruction = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction, self.topWall,self.rightWall, self.bottomWall, self.leftWall)
             new_instruction = self.obstacle_dodger.dodge(self.obstacle, player_rect, next_instruction)
 
