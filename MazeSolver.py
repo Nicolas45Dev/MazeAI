@@ -28,7 +28,6 @@ class Node():
         return False
 
 
-
 class MazeSolver():
     def __init__(self, maze):
         self.maze = maze
@@ -43,9 +42,9 @@ class MazeSolver():
         for r in range(rows):
             for c in range(cols):
                 if self.maze[r][c] == START:
-                    self.start = (r, c)
+                    self.setStart(r, c)
                 if self.maze[r][c] == EXIT:
-                    self.exit = (r, c)
+                    self.setExit(r, c)
 
     def setStart(self, y, x):
         self.start = (y, x)
@@ -62,16 +61,12 @@ class MazeSolver():
         exit_node = Node(None, self.exit)
         exit_node.g = exit_node.h = exit_node.f = 0
 
+        # Initialize both open and closed list
         open_list = []
         heapq.heappush(open_list, (0, start_node))  # Use a heap queue (priority queue)
-        # Initialize both open and closed list
-
         closed_list = set()
 
         counter = 0
-
-        # Add the start node
-        #open_list.append(start_node)
 
         # Loop until you find the end
         while len(open_list) > 0:
@@ -136,14 +131,12 @@ class MazeSolver():
 
                 # Create the f, g, and h values
                 child.g = current_node.g + 1
-                child.h = ((child.position[0] - exit_node.position[0]) ** 2) + (
-                            (child.position[1] - exit_node.position[1]) ** 2)
+                child.h = ((child.position[0] - exit_node.position[0]) ** 2) + ((child.position[1] - exit_node.position[1]) ** 2)
                 child.f = child.g + child.h
 
                 for node in open_list:
                     if node[1].position == child.position and node[1].g <= child.g:
                         continue
-
 
                 # Add the child to the open list
                 heapq.heappush(open_list, (child.f, child))

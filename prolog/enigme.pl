@@ -22,7 +22,7 @@ choose_crystal(3, Crystals, _, Position) :-
 
 % Rules for four crystals
 choose_crystal(4, Crystals, LockColor, Position) :-
-    (   count(red, Crystals, CountRed), CountRed > 1, LockColor = silver -> find_last_position(red, Crystals, Position)
+    (   count(red, Crystals, CountRed), CountRed > 1, LockColor == silver -> find_last_position(red, Crystals, Position)
     ;   last(Crystals, yellow), \+ member(red, Crystals) -> Position = 1
     ;   count(blue, Crystals, 1) -> Position = 1
     ;   count(yellow, Crystals, CountYellow), CountYellow > 1 -> find_last_position(yellow, Crystals, Position)
@@ -39,7 +39,7 @@ choose_crystal(5, Crystals, LockColor, Position) :-
 
 % Rules for six crystals
 choose_crystal(6, Crystals, LockColor, Position) :-
-    (   \+ member(yellow, Crystals), LockColor = bronze -> Position = 3
+    (   \+ member(yellow, Crystals), LockColor == bronze -> Position = 3
     ;   count(yellow, Crystals, CountYellow), CountYellow = 1, count(white, Crystals, CountWhite), CountWhite > 1 -> Position = 4
     ;   \+ member(red, Crystals) -> Position = 6
     ;   Position = 4  % Default action if none of the above conditions are met
